@@ -67,13 +67,16 @@
                 alert("Teks tidak boleh kosong!");
                 return;
             }
-            
-            const fileName = `paste_${Math.random().toString(36).substr(2, 6)}.txt`;
-            const pasteData = { fileName, username, text };
+
+            const pasteId = Math.random().toString(36).substr(2, 6); // Membuat ID unik
+            const pasteData = { pasteId, username, text };
             let pastes = JSON.parse(localStorage.getItem('pastes')) || [];
             pastes.push(pasteData);
             localStorage.setItem('pastes', JSON.stringify(pastes));
             alert("Paste berhasil disimpan!");
+
+            const pasteUrl = `viewPaste.html?id=${pasteId}`; // Membuat URL untuk melihat paste
+            console.log("Paste URL: ", pasteUrl); // Menampilkan URL paste yang baru
             loadUserPastes();
         }
 
@@ -103,7 +106,7 @@
             
             userPastes.forEach(paste => {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="viewPaste.html?id=${paste.fileName}" target="_blank">${paste.fileName}</a>`;
+                li.innerHTML = `<a href="viewPaste.html?id=${paste.pasteId}" target="_blank">${paste.pasteId}</a>`;
                 pasteList.appendChild(li);
             });
         }

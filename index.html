@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastebin Sederhana</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        textarea { width: 80%; height: 200px; margin-bottom: 10px; }
+        .paste-container { margin-top: 20px; }
+        #pasteList li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Pastebin Sederhana</h1>
+    <div id="authSection">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Masukkan nama pengguna"><br>
+        <input type="password" id="password" placeholder="Masukkan kata sandi"><br>
+        <button onclick="login()">Login</button>
+    </div>
+    <div id="mainSection" style="display:none;">
+        <h2>Selamat datang, <span id="userDisplay"></span>!</h2>
+        <button onclick="logout()">Logout</button>
+        <button onclick="showAccount()">Akun Saya</button>
+        <br><br>
+        <textarea id="pasteInput" placeholder="Tulis teks di sini..."></textarea><br>
+        <button onclick="savePaste()">Simpan Paste</button>
+        <div class="paste-container" id="pasteContainer"></div>
+    </div>
+    <div id="accountSection" style="display:none;">
+        <h2>Paste Saya</h2>
+        <ul id="pasteList"></ul>
+        <button onclick="showMain()">Kembali</button>
+    </div>
+
+    <div id="pasteViewSection" style="display:none;">
+        <h2>Melihat Paste</h2>
+        <pre id="pasteContent"></pre>
+        <button onclick="showAccount()">Kembali ke Akun Saya</button>
+        <button onclick="showMain()">Kembali ke Halaman Utama</button>
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (!username || !password) {
+                alert("Nama pengguna dan kata sandi harus diisi!");
+                return;
+            }
+            localStorage.setItem('loggedInUser', username);
+            localStorage.setItem(`user_${username}_password`, password);
+            showMain();
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem(`user_${localStorage.getItem('loggedInUser')}_password`);
+            location.reload();
+        }
+
+        function savePaste() {
+            const text = document.getElementById('pasteInput').value;
+            const username = localStorage.getItem('loggedInUser');
+            if (!text.trim()) {
+                alert("Teks tidak boleh kosong!");
+                return;
+            }
+            
+            const fileName = `paste_${Math.random().toString(36).substr(2, 6)}.txt`;
+            const pasteData = { fileName, username, text };
+            let pastes = JSON.parse(localStorage.getItem('pastes')) || [];
+            pastes.push(pasteData);
+            localStorage.setItem('pastes', JSON.stringify(pastes));
+            alert("Paste berhasil disimpan!");
+            loadUserPastes();
+        }
+
+        function showAccount() {
+            document.getElementById('mainSection').style.display = 'none';
+            document.getElementById('accountSection').style.display = 'block';
+            loadUserPastes();
+        }
+
+        function showMain() {
+            document.getElementById('accountSection').style.display = 'none';
+            document.getElementById('pasteViewSection').style.display = 'none';
+            document.getElementById('mainSection').style.display = 'block';
+        }
+
+        function loadUserPastes() {
+            const username = localStorage.getItem('loggedInUser');
+            const pastes = JSON.parse(localStorage.getItem('pastes')) || [];
+            const userPastes = pastes.filter(p => p.username === username);
+            const pasteList = document.getElementById('pasteList');
+            pasteList.innerHTML = "";
+            
+            if (userPastes.length === 0) {
+                pasteList.innerHTML = "<li>Belum ada paste.</li>";
+                return;
+            }
+            
+            userPastes.forEach(paste => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="viewPaste.html?id=${paste.fileName}" target="_blank">${paste.fileName}</a>`;
+                pasteList.appendChild(li);
+            });
+        }
+
+        function checkLogin() {
+            const user = localStorage.getItem('loggedInUser');
+            if (user) {
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('mainSection').style.display = 'block';
+                document.getElementById('userDisplay').innerText = user;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", checkLogin);
+    </script>
+</body>
+</html>

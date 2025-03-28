@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PasteBin Sederhana</title>
+</head>
+<body>
+    <div id="registerPage">
+        <h2>Daftar</h2>
+        <input type="text" id="regUsername" placeholder="Masukkan nama pengguna">
+        <input type="password" id="regPassword" placeholder="Masukkan kata sandi">
+        <button onclick="register()">Daftar</button>
+        <p id="regMessage"></p>
+        <p>Sudah punya akun? <a href="#" onclick="showLoginPage()">Login</a></p>
+    </div>
+    
+    <div id="loginPage" style="display: none;">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Masukkan nama pengguna">
+        <input type="password" id="password" placeholder="Masukkan kata sandi">
+        <button onclick="login()">Login</button>
+        <p id="loginMessage"></p>
+    </div>
+
+    <div id="pastePage" style="display: none;">
+        <h2>PasteBin</h2>
+        <textarea id="pasteContent" placeholder="Tulis paste di sini..."></textarea>
+        <button onclick="savePaste()">Simpan Paste</button>
+        <h3>Paste yang Disimpan</h3>
+        <ul id="pasteList"></ul>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        const GITHUB_USERNAME = "USERNAME_GITHUB";
+        const REPO_NAME = "NAMA_REPO";
+        const USERS_FILE = "users.json";
+        const PASTES_FILE = "pastes.json";
+        const TOKEN = "TOKEN_GITHUB";
+        
+        function showLoginPage() {
+            document.getElementById("registerPage").style.display = "none";
+            document.getElementById("loginPage").style.display = "block";
+        }
+        
+        function checkLogin() {
+            if (localStorage.getItem("loggedInUser")) {
+                document.getElementById("registerPage").style.display = "none";
+                document.getElementById("loginPage").style.display = "none";
+                document.getElementById("pastePage").style.display = "block";
+                loadPastes();
+            }
+        }
+        
+        async function getData(file) {
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${file}`, {
+                headers: { Authorization: `token ${TOKEN}` }
+            });
+            const data = await response.json();
+            return JSON.parse(atob(data.content));
+        }
+        
+        async function updateData(file, data) {
+            const currentData = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${file}`, {
+                headers: { Authorization: `token ${TOKEN}` }
+            }).then(res => res.json());
+            
+            const updatedContent = btoa(JSON.stringify(data, null, 2));
+            
+            await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${file}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${TOKEN}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Update file",
+                    content: updatedContent,
+                    sha: currentData.sha
+                })
+            });
+        }
+        
+        async function register() {
+            const username = document.getElementById("regUsername").value;
+            const password = document.getElementById("regPassword").value;
+            const users = await getData(USERS_FILE);
+            
+            if (users.some(user => user.username === username)) {
+                alert("Username sudah terdaftar!");
+                return;
+            }
+            
+            users.push({ username, password });
+            await updateData(USERS_FILE, users);
+            alert("Pendaftaran berhasil! Silakan login.");
+            showLoginPage();
+        }
+        
+        async function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const users = await getData(USERS_FILE);
+            
+            const user = users.find(user => user.username === username && user.password === password);
+            if (user) {
+                localStorage.setItem("loggedInUser", username);
+                alert("Login berhasil!");
+                checkLogin();
+            } else {
+                alert("Username atau password salah!");
+            }
+        }
+        
+        async function savePaste() {
+            const content = document.getElementById("pasteContent").value;
+            const username = localStorage.getItem("loggedInUser");
+            if (!username) {
+                alert("Anda harus login terlebih dahulu!");
+                return;
+            }
+            
+            const pastes = await getData(PASTES_FILE);
+            pastes.push({ username, content });
+            await updateData(PASTES_FILE, pastes);
+            alert("Paste berhasil disimpan!");
+            loadPastes();
+        }
+        
+        async function loadPastes() {
+            const pastes = await getData(PASTES_FILE);
+            const list = document.getElementById("pasteList");
+            list.innerHTML = "";
+            pastes.forEach((paste) => {
+                const li = document.createElement("li");
+                li.textContent = `${paste.username}: ${paste.content}`;
+                list.appendChild(li);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem("loggedInUser");
+            location.reload();
+        }
+        
+        checkLogin();
+    </script>
+</body>
+</html>

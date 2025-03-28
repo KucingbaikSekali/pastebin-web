@@ -13,6 +13,7 @@
     <h1>Melihat Paste</h1>
     <pre id="pasteContent"></pre>
     <button onclick="window.history.back()">Kembali</button>
+    <button onclick="viewRawText()">Lihat Raw Text</button> <!-- Tombol untuk melihat raw text -->
 
     <script>
         function getPaste() {
@@ -29,6 +30,27 @@
             
             if (paste) {
                 document.getElementById('pasteContent').innerText = paste.text;
+            } else {
+                alert('Paste tidak ditemukan!');
+            }
+        }
+
+        // Fungsi untuk melihat raw text
+        function viewRawText() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pasteId = urlParams.get('id');
+
+            if (!pasteId) {
+                alert('File tidak ditemukan!');
+                return;
+            }
+
+            const pastes = JSON.parse(localStorage.getItem('pastes')) || [];
+            const paste = pastes.find(p => p.pasteId === pasteId);
+
+            if (paste) {
+                const rawText = encodeURIComponent(paste.text); // Mengubah teks menjadi format URL-encoded
+                window.location.href = `data:text/plain;charset=utf-8,${rawText}`; // Menampilkan raw text di browser
             } else {
                 alert('Paste tidak ditemukan!');
             }

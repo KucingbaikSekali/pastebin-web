@@ -17,15 +17,15 @@
     <script>
         function getPaste() {
             const urlParams = new URLSearchParams(window.location.search);
-            const fileName = urlParams.get('id');
+            const pasteId = urlParams.get('id');
 
-            if (!fileName) {
+            if (!pasteId) {
                 alert('File tidak ditemukan!');
                 return;
             }
 
             const pastes = JSON.parse(localStorage.getItem('pastes')) || [];
-            const paste = pastes.find(p => p.fileName === fileName);
+            const paste = pastes.find(p => p.pasteId === pasteId);
             
             if (paste) {
                 document.getElementById('pasteContent').innerText = paste.text;

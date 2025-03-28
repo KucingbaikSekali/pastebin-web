@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melihat Paste</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        pre { width: 80%; height: auto; margin: 10px; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Melihat Paste</h1>
+    <pre id="pasteContent"></pre>
+    <button onclick="window.history.back()">Kembali</button>
+
+    <script>
+        function getPaste() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileName = urlParams.get('id');
+
+            if (!fileName) {
+                alert('File tidak ditemukan!');
+                return;
+            }
+
+            const pastes = JSON.parse(localStorage.getItem('pastes')) || [];
+            const paste = pastes.find(p => p.fileName === fileName);
+            
+            if (paste) {
+                document.getElementById('pasteContent').innerText = paste.text;
+            } else {
+                alert('Paste tidak ditemukan!');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", getPaste);
+    </script>
+</body>
+</html>
